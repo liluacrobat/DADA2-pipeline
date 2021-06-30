@@ -16,7 +16,7 @@ fi
 
 echo 'directory: ' $dada2_direc
 
-REF_DB_DIREC="/projects/academic/pidiazmo/vinita/ref_db"
+REF_DB_DIREC="/projects/academic/pidiazmo/16S_Database/HOMD/eHOMD15.2"
 
 START=`date +%s`
 
@@ -56,10 +56,8 @@ echo 'STEP 4: Generating count table...'
 echo '-------------------------------------------------------------------------'
 if [ $? -eq 0 ];
 then
-	biom convert -i ./table/feature-table.biom -o ./table/feature-table.txt --to-tsv	
-	biom convert -i ./table/feature-table.txt -o ./table/feature-table.biom
-	mothur "#biom.info(biom=./table/feature-table.biom, format=hdf5)"
-	mothur "#count.seqs(shared=./table/feature-table.userLabel.shared, compress=f)"
+	biom convert -i ./table/feature-table.biom -o ./table/feature-table.txt --to-tsv
+    sed '1d' ./table/feature-table.txt > ./table/feature-table-no-head.txt
 fi
 
 if [ $? == 0 ];
@@ -79,17 +77,17 @@ echo '-------------------------------------------------------------------------'
 echo '-------------------------------------------------------------------------'
 echo 'STEP 7: Converting blast taxonomy file...'
 echo '-------------------------------------------------------------------------'
-python blast_parse.py -i ./blast_99_taxonomy -o ./parsed_blast_taxonomy
+python blast_parse.py -i ./blast_99_taxonomy -o ./parsed_blast_taxonomy_99
 
 echo '-------------------------------------------------------------------------'
 echo 'STEP 8: Mapping taxonomy name to identity colum in blast taxonomy file...'
 echo '-------------------------------------------------------------------------'
-python make_taxonomy_table.py -b ./parsed_blast_taxonomy -t $REF_DB_DIREC/HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy -u ./final_blast_taxonomy
+python make_taxonomy_table.py -b ./parsed_blast_taxonomy_99 -t $REF_DB_DIREC/HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy -u ./final_blast_taxonomy_99
 
 echo '-------------------------------------------------------------------------'
 echo 'STEP 9: Assiging rdp taxonomy...'
 echo '-------------------------------------------------------------------------'
-mothur "#classify.seqs(fasta=./dna-sequences.fasta, count=./feature-table.userLabel.userLabel.count_table, reference="$REF_DB_DIREC"/HOMD_16S_rRNA_RefSeq_V15.22.fasta, taxonomy="$REF_DB_DIREC"/HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy)"
+mothur "#classify.seqs(fasta=./dna-sequences.fasta, reference="$REF_DB_DIREC"/HOMD_16S_rRNA_RefSeq_V15.22.fasta, taxonomy="$REF_DB_DIREC"/HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy)"
 
 echo '-------------------------------------------------------------------------'
 echo 'STEP 10: Removing rdp prefix and suffixes...'
@@ -99,21 +97,34 @@ python remove_rdp_prefix.py -t dna-sequences.mothur.wang.taxonomy
 echo '-------------------------------------------------------------------------'
 echo 'STEP 11: Merging blast and rdp results'
 echo '-------------------------------------------------------------------------'
-python merge_blast_rdp.py -b final_blast_taxonomy -r transformed_rdp_taxonomy.txt -o merged_taxonomy.txt
+python merge_blast_rdp.py -b final_blast_taxonomy_99 -r transformed_rdp_taxonomy.txt -o merged_taxonomy_99.txt
 
 echo '-------------------------------------------------------------------------'
 echo 'STEP 12: Getting final feature table with taxonomy...'
 echo '-------------------------------------------------------------------------'
-python merge_taxonomy_table.py -t feature-table.userLabel.userLabel.count_table merged_taxonomy.txt -o final_feature_table.txt
-
-echo 'Feature table creation complete...'
-echo 'Saved file to: final_feature_table.txt'
+python merge_taxonomy_table.py -t ./table/feature-table-no-head.txt merged_taxonomy_99.txt -o final_feature_table_99.txt
 
 echo '-------------------------------------------------------------------------'
-echo 'STEP 12: Summarizing results...'
+echo 'STEP 7: Converting blast taxonomy file...'
 echo '-------------------------------------------------------------------------'
-python summarize_taxa.py -t final_feature_table.txt
+python blast_parse.py -i ./blast_97_taxonomy -o ./parsed_blast_taxonomy_97
 
+echo '-------------------------------------------------------------------------'
+echo 'STEP 8: Mapping taxonomy name to identity colum in blast taxonomy file...'
+echo '-------------------------------------------------------------------------'
+python make_taxonomy_table.py -b ./parsed_blast_taxonomy_97 -t $REF_DB_DIREC/HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy -u ./final_blast_taxonomy_97
+
+echo '-------------------------------------------------------------------------'
+echo 'STEP 11: Merging blast and rdp results'
+echo '-------------------------------------------------------------------------'
+python merge_blast_rdp.py -b final_blast_taxonomy_97 -r transformed_rdp_taxonomy.txt -o merged_taxonomy_97.txt
+
+echo '-------------------------------------------------------------------------'
+echo 'STEP 12: Getting final feature table with taxonomy...'
+echo '-------------------------------------------------------------------------'
+python merge_taxonomy_table.py -t ./table/feature-table-no-head.txt merged_taxonomy_97.txt -o final_feature_table_97.txt
+
+cp final_feature_table.txt final_feature_table_97.txt
 END=`date +%s`
 ELAPSED=$(( $END - $START ))
 
