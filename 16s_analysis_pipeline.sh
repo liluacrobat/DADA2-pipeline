@@ -124,7 +124,6 @@ echo 'STEP 12: Getting final feature table with taxonomy...'
 echo '-------------------------------------------------------------------------'
 python merge_taxonomy_table.py -t ./table/feature-table-no-head.txt merged_taxonomy_97.txt -o final_feature_table_97.txt
 
-cp final_feature_table.txt final_feature_table_97.txt
 END=`date +%s`
 ELAPSED=$(( $END - $START ))
 
