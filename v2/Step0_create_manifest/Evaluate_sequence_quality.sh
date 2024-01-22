@@ -13,6 +13,7 @@
 cd fastq
 for x in $(ls *.gz); do gunzip $x;done
 
+module load ccrsoft/legacy
 eval "$(/util/common/python/py38/anaconda-2020.07/bin/conda shell.bash hook)"
 conda activate /projects/academic/pidiazmo/projectsoftwares/minion
 mkdir fastqc
