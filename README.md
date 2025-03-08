@@ -66,7 +66,8 @@ $MOTHURPATH/mothur "#classify.seqs(fasta=./dna-sequences.fasta, reference=HOMD_1
 
 python remove_rdp_prefix.py -t dna-sequences.mothur.wang.taxonomy
 python merge_blast_rdp.py -b final_blast_taxonomy_99 -r transformed_rdp_taxonomy.txt -o merged_taxonomy_99.txt
-  ``` 
+```
+
 ## Final Taxonomy Consolidation
 
 - After processing individual sequences, reach out to me on combining taxonomy results into a unified table.
