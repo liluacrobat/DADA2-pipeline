@@ -50,8 +50,8 @@ bash DADA2_Step2.sh
 
 - The script will perform taxonomy assignment for each sequence set separately.
 - To process each individual Sanger 16S sequence file, repeat running the below codes. Replace dna-sequences.fasta with the Sanger sequence name.
-  ```
-  module load gcc/11.2.0  openmpi/4.1.1
+```
+module load gcc/11.2.0  openmpi/4.1.1
 module load blast+/2.12.0
 makeblastdb -in HOMD_16S_rRNA_RefSeq_V15.22.fasta -out HOMD -dbtype 'nucl' -input_type fasta
 blastn -query ./dna-sequences.fasta -task megablast -db HOMD  -perc_identity 99 -qcov_hsp_perc 90 -max_target_seqs 5000 -outfmt "7 qacc sacc qstart qend sstart send length pident qcovhsp qcovs" -out blast_99_taxonomy
