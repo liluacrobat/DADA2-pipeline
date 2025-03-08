@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -l
 #SBATCH --partition=general-compute
 #SBATCH --qos=general-compute
 #SBATCH --time=71:00:00
