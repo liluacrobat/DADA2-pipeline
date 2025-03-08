@@ -1,6 +1,83 @@
 # Sequencing-Analysis-with-DADA2
 16s rRNA data sequencing analysis using DADA2 in QIIME2 and Mothur
+# 16S Sequence Analysis Pipeline Guide
 
+This guide outlines the steps to use the pipeline for processing 16S rRNA sequences.
+
+## Step 1: Prepare Sequence Files on CCR
+
+- Upload your gzipped 16S sequence files to the CCR.
+- Run the following commands on CCR to generate `LS.txt`, which lists all your sequence files:
+
+```bash
+ls *.fastq.gz > LS.txt
+```
+
+## Step 2: Generate the Manifest File
+
+- Download `LS.txt` from CCR and place it into your local working directory.
+- Use `main_CreateManifest.m` (located in the `Step0_create_manifest` folder) to generate the `pe-32-manifest` file.
+  - **Important:** Modify `main_CreateManifest.m` by updating the file paths (variable pp) to correctly point to your forward and reverse sequence files on CCR.
+
+- Run `main_CreateManifest.m`. This script outputs a `pe-32-manifest` file containing sample names and paths to forward and reverse sequence files.
+
+## Step 3: DADA2 Sequence Processing
+
+### Step 3.1: Quality Filtering and Denoising (CCR)
+
+- Upload your `pe-32-manifest` file back to CCR.
+- Execute `DADA2_Step1.sh` on CCR to perform quality filtering, trimming, merging, and sequence table generation using DADA2:
+
+```bash
+bash DADA2_Step1.sh
+```
+
+- Make sure `DADA2_Step1.sh` references your manifest file correctly.
+
+## Step 3: Taxonomy Assignment
+
+- Upload all files from the `Step2_taxonomy_assignment` folder to your designated working directory on CCR.
+
+- Run `DADA2_Step2.sh` on CCR to assign taxonomy:
+
+```bash
+bash DADA2_Step2.sh
+```
+
+- Before running, remember to check and understand each step included in the `16s_analysis_pipeline.sh`. Specifically, update your file paths and ensure the taxonomy reference database is correctly specified. For oral microbiome, the reference is not necessary to change.
+
+# Individual Taxonomy of Sanger sequences
+
+- The script will perform taxonomy assignment for each sequence set separately.
+- To process each individual Sanger 16S sequence file, repeat running the below codes. Replace dna-sequences.fasta with the Sanger sequence name.
+  ```
+  module load gcc/11.2.0  openmpi/4.1.1
+module load blast+/2.12.0
+makeblastdb -in HOMD_16S_rRNA_RefSeq_V15.22.fasta -out HOMD -dbtype 'nucl' -input_type fasta
+blastn -query ./dna-sequences.fasta -task megablast -db HOMD  -perc_identity 99 -qcov_hsp_perc 90 -max_target_seqs 5000 -outfmt "7 qacc sacc qstart qend sstart send length pident qcovhsp qcovs" -out blast_99_taxonomy
+
+module load scipy-bundle/2021.10
+python blast_parse.py -i ./blast_99_taxonomy -o ./parsed_blast_taxonomy_99
+python make_taxonomy_table.py -b ./parsed_blast_taxonomy_99 -t ./HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy -u ./final_blast_taxonomy_99
+
+MOTHURPATH='/projects/academic/pidiazmo/projectsoftwares/mothur/v1.48.1'
+
+$MOTHURPATH/mothur "#classify.seqs(fasta=./dna-sequences.fasta, reference=HOMD_16S_rRNA_RefSeq_V15.22.fasta, taxonomy=HOMD_16S_rRNA_RefSeq_V15.22.mothur.taxonomy)"
+
+python remove_rdp_prefix.py -t dna-sequences.mothur.wang.taxonomy
+python merge_blast_rdp.py -b final_blast_taxonomy_99 -r transformed_rdp_taxonomy.txt -o merged_taxonomy_99.txt
+  ``` 
+## Final Taxonomy Consolidation
+
+- After processing individual sequences, reach out to me on combining taxonomy results into a unified table.
+
+---
+
+**Note:** Ensure all paths and filenames within scripts match your local directory structure. Contact me if you have any questions or run into issues.
+
+Happy analysis!
+
+# Old notes (part is useful part not)
 This pipeline is created using both QIIME2 and MOTHUR and has many conversions between these two file formats. Please read more about these pipelines in the following tutorials:
 QIIME2 : [Moving pictures tutorials](https://docs.qiime2.org/2021.2/tutorials/moving-pictures/)
 MOTHUR : [Miseq SOP tutorial](https://mothur.org/wiki/miseq_sop/)
